@@ -1,11 +1,9 @@
 import torch
 import torchvision.models as models
+import torch.nn as nn
 import torchvision.transforms as trans
 import skimage.io as skio
-import skimage.transform as sktr
-import skimage.filters as skfltr
 import skimage.util as skutil
-import skimage.color as skclr
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -34,4 +32,22 @@ def initialize_target_image(shape):
     im = np.zeros(shape)
     return skutil.random_noise(im)
 
-vgg = models.vgg19()
+# print(models.vgg19().__dict__)
+
+class VGG(nn.Module):
+    def __init__(self):
+        self.vgg = models.vgg19(pretrained=True)
+
+    def forward(self, x):
+        conv_results = {}
+        for i, layer in enumerate(self.vgg.features):
+            x = layer(x)
+            if type(layer) == torch.nn.modules.conv.Conv2d:
+                conv_results[i] = x
+        return conv_results
+
+
+vgg = VGG()
+content, style = load_images()
+content_results = vgg.forward(content)
+style_results = vgg.forward(style)
