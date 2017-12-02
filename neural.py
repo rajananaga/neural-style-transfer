@@ -104,10 +104,15 @@ def construct_image(content, style):
             optimizer.zero_grad()
             style_loss = calculate_style_loss(style_layers, target_layers)
             content_loss = calculate_content_loss(content_layers, target_layers)
-            if i % 100 == 0:
+            if i % 10 == 0:
                 print('Step:', i, '/', N_ITER)
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
+            if i % 100 == 0:
+                cloned_param = target_param.clone()
+                im = torch.squeeze(0, cloned_param).data.numpy()
+                print('Saved image with shape:', im.shape)
+                skio.imsave(im, OUTPUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
             return loss
@@ -124,6 +129,5 @@ if __name__ == "__main__":
 
     content, style = load_images()
     final_image = construct_image(content, style)
-    skio.imsave(final_image, OUTPUT_PATH + 'output.' + F_EXT)
     plt.imshow(final_image)
     plt.show()
