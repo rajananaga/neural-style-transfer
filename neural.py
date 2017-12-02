@@ -23,6 +23,7 @@ STYLE_WEIGHT = 0.5
 CONTENT_WEIGHT = 1 - STYLE_WEIGHT
 N_ITER = 5000
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
+TENSOR_TYPE = torch.FloatTensor
 
 class VGGActivations(nn.Module):
     def __init__(self):
@@ -45,7 +46,7 @@ def toTorch(im):
     im = Variable(trans.ToTensor()(im))
     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
     im = im.unsqueeze(0)
-    return im
+    return im.type(TENSOR_TYPE)
 
 def load_images():
     content = skio.imread(CONTENT_IMAGE)/255.
@@ -74,7 +75,6 @@ def calculate_style_loss(style_layers, target_layers):
         style_layer = style_layers[l]
         target_layer = target_layers[l]
         _, N, y, x = style_layer.data.size()
-        print(N, y, x)
         M = y * x
         style_layer = style_layer.view(N, M)
         target_layer = target_layer.view(N, M)
@@ -93,11 +93,10 @@ def construct_image(content, style):
     optimizer = LBFGS([target_param])
     vgg_activations = VGGActivations()
     if USE_CUDA:
-        vgg_activations.vgg = vgg_activations.vgg.cuda()
+        vgg_activations = vgg_activations.cuda()
     vgg = vgg_activations
     content_layers = vgg.forward(content)
     style_layers = vgg.forward(style)
-    print(type(style_layers), len(style_layers))
     for i in range(N_ITER):
         # zero gradient buffer to prevent buildup
         target_layers = vgg.forward(target_param)
@@ -110,15 +109,19 @@ def construct_image(content, style):
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
-            loss.backward()
+            loss.backward(retain_graph=True)
             return loss
         optimizer.step(closure)
     return torch.squeeze(0, target_param).data
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == '--gpu':
-        USE_CUDA = True
-    print('entering main loop')
+    # if len(sys.argv) > 1 and sys.argv[1] == '--gpu':
+    #     USE_CUDA = True
+    USE_CUDA = torch.cuda.is_available()
+    print('using gpu:', USE_CUDA)
+    if USE_CUDA:
+        TENSOR_TYPE = torch.cuda.FloatTensor
+
     content, style = load_images()
     final_image = construct_image(content, style)
     skio.imsave(final_image, OUTPUT_PATH + 'output.' + F_EXT)
