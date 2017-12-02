@@ -57,8 +57,11 @@ def load_images():
     return content, style
 
 def initialize_target_image():
-    im = np.zeros(IMAGE_SHAPE)
-    return skutil.random_noise(im)
+    im = np.random.normal(0, 1, size=IMAGE_SHAPE)
+    # im[im > 1] = 1
+    # im[im < -1] = -1
+    print('range of values: ', np.min(im), np.max(im))
+    return im
 
 # this is the average squared difference between the layer outputs
 def calculate_content_loss(content_layers, target_layers):
@@ -109,15 +112,22 @@ def construct_image(content, style):
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
             if i % 100 == 0:
-                cloned_param = target_param.clone()
-                im = torch.squeeze(0, cloned_param).data.numpy()
+                if USE_CUDA:
+                    cloned_param = target_param.clone().cpu()
+                else:
+                    cloned_param = target_param.clone()
+                print(cloned_param.data.size())
+                im = cloned_param.squeeze(0).data.numpy()
+                # reshape the image to be (N, N, 3) from (3, N, N)
+                im = np.moveaxis(im, 0, -1)
+                print('range of values: ', np.min(im), np.max(im))
                 print('Saved image with shape:', im.shape)
-                skio.imsave(im, OUTPUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
+                skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
             return loss
         optimizer.step(closure)
-    return torch.squeeze(0, target_param).data.numpy()
+    return target_param.squeeze(0).data.numpy()
 
 if __name__ == "__main__":
     # if len(sys.argv) > 1 and sys.argv[1] == '--gpu':
