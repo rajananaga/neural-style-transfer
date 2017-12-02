@@ -58,9 +58,8 @@ def load_images():
 
 def initialize_target_image():
     im = np.random.normal(0, 1, size=IMAGE_SHAPE)
-    # im[im > 1] = 1
-    # im[im < -1] = -1
-    print('range of values: ', np.min(im), np.max(im))
+    im[im > 1] = 1
+    im[im < -1] = -1
     return im
 
 # this is the average squared difference between the layer outputs
@@ -120,8 +119,8 @@ def construct_image(content, style):
                 im = cloned_param.squeeze(0).data.numpy()
                 # reshape the image to be (N, N, 3) from (3, N, N)
                 im = np.moveaxis(im, 0, -1)
-                print('range of values: ', np.min(im), np.max(im))
-                print('Saved image with shape:', im.shape)
+                # print('range of values: ', np.min(im), np.max(im))
+                # print('Saved image with shape:', im.shape)
                 skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
