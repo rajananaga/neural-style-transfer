@@ -117,7 +117,7 @@ def construct_image(content, style):
             loss.backward(retain_graph=True)
             return loss
         optimizer.step(closure)
-    return torch.squeeze(0, target_param).data
+    return torch.squeeze(0, target_param).data.numpy()
 
 if __name__ == "__main__":
     # if len(sys.argv) > 1 and sys.argv[1] == '--gpu':
@@ -126,7 +126,6 @@ if __name__ == "__main__":
     print('using gpu:', USE_CUDA)
     if USE_CUDA:
         TENSOR_TYPE = torch.cuda.FloatTensor
-
     content, style = load_images()
     final_image = construct_image(content, style)
     plt.imshow(final_image)
