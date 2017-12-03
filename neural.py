@@ -10,13 +10,14 @@ import skimage.transform as sktrans
 import matplotlib.pyplot as plt
 import numpy as np
 from torch.autograd import Variable
+import pdb
 
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
 F_EXT = 'JPG'
 CONTENT_IMAGE = IM_PATH + 'content.jpg'
 STYLE_IMAGE = IM_PATH + 'style.jpg'
-IM_SIZE = 512
+IM_SIZE = 128
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
 STYLE_WEIGHT = 1000.
@@ -49,15 +50,15 @@ def toTorch(im):
     return im.type(TENSOR_TYPE)
 
 def load_images():
-    content = skio.imread(CONTENT_IMAGE)/255.
-    style = skio.imread(STYLE_IMAGE)/255.
+    content = skio.imread(CONTENT_IMAGE)/1.
+    style = skio.imread(STYLE_IMAGE)/1.
     content = toTorch(content)
     style = toTorch(style)
     assert style.data.size() == content.data.size(), "Image shapes are not equal"
     return content, style
 
 def initialize_target_image():
-    im = np.random.randn(0, 1, size=IMAGE_SHAPE)
+    im = np.random.uniform(0, 1, size=IMAGE_SHAPE)
     im[im > 1] = 1
     im[im < -1] = -1
     return im
@@ -89,16 +90,16 @@ def calculate_style_loss(style_layers, target_layers):
     return sum(layer_expectations)
 
 def construct_image(content, style):
-    target = Variable(torch.randn([1, 3, 512, 512]).type(TENSOR_TYPE))
-    target_param = nn.Parameter(target.data)
+    target = Variable(torch.randn([1, 3, IM_SIZE, IM_SIZE]).type(TENSOR_TYPE), requires_grad=True)
     # NOTE: Experiment with learning rate later
-    optimizer = LBFGS([target_param])
+    optimizer = LBFGS([target])
     vgg_activations = VGGActivations()
     if USE_CUDA:
         vgg_activations = vgg_activations.cuda()
     vgg = vgg_activations
     content_layers = vgg.forward(content)
     style_layers = vgg.forward(style)
+    # pdb.set_trace()
     for i in range(N_ITER):
         # zero gradient buffer to prevent buildup
         target_layers = vgg.forward(target)
@@ -112,19 +113,20 @@ def construct_image(content, style):
                 print('Content loss:', content_loss.data[0])
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
+            if i % 100 == 0:
+                if USE_CUDA:
+                    cloned_param = target_param.clone().cpu()
+                else:
+                    cloned_param = target_param.clone()
+                print(cloned_param.data.size())
+                im = cloned_param.squeeze(0).data.numpy()
+                # reshape the image to be (N, N, 3) from (3, N, N)
+                im = np.moveaxis(im, 0, -1)
+                # print('range of values: ', np.min(im), np.max(im))
+                # print('Saved image with shape:', im.shape)
+                skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
             return loss
-            # if i % 100 == 0:
-            #     if USE_CUDA:
-            #         cloned_param = target_param.clone().cpu()
-            #     else:
-            #         cloned_param = target_param.clone()
-            #     print(cloned_param.data.size())
-            #     im = cloned_param.squeeze(0).data.numpy()
-            #     # reshape the image to be (N, N, 3) from (3, N, N)
-            #     im = np.moveaxis(im, 0, -1)
-            #     print('range of values: ', np.min(im), np.max(im))
-            #     # print('Saved image with shape:', im.shape)
-            #     skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
+
 
         optimizer.step(closure)
     return target_param.squeeze(0).data.numpy()
