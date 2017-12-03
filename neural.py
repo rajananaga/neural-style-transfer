@@ -43,9 +43,17 @@ class VGGActivations(nn.Module):
         return conv_results
 
 
+# def toTorch(im):
+#     im = sktrans.resize(im, IMAGE_SHAPE, mode='constant')
+#     im = Variable(trans.ToTensor()(im))
+#     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
+#     im = im.unsqueeze(0)
+#     return im.type(TENSOR_TYPE)
+
 def toTorch(im):
     im = sktrans.resize(im, IMAGE_SHAPE, mode='constant')
-    im = Variable(trans.ToTensor()(im))
+    transform = trans.Compose([trans.ToTensor(),trans.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+    im = Variable(transform(im))
     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
     im = im.unsqueeze(0)
     return im.type(TENSOR_TYPE)
@@ -93,6 +101,8 @@ def calculate_style_loss(style_layers, target_layers):
 def construct_image(content, style):
     target = Variable(torch.randn([1, 3, IM_SIZE, IM_SIZE]).type(TENSOR_TYPE), requires_grad=True)
     # NOTE: Experiment with learning rate later
+    ## taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
+
     optimizer = LBFGS([target])
     vgg_activations = VGGActivations()
     if USE_CUDA:
@@ -120,7 +130,8 @@ def construct_image(content, style):
                     cloned_param = target.clone()
                 print(cloned_param.data.size())
                 im = cloned_param.squeeze(0).data
-                utils.save_image(im, OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
+                denorm = transforms.Normalize((-2.12, -2.04, -1.80), (4.37, 4.46, 4.44))
+                utils.save_image(denorm(im).clamp(0,1), OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
             return loss
         optimizer.step(closure)
 
