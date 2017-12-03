@@ -19,9 +19,9 @@ STYLE_IMAGE = IM_PATH + 'style.jpg'
 IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
-STYLE_WEIGHT = 0.5
-CONTENT_WEIGHT = 1 - STYLE_WEIGHT
-N_ITER = 5000
+STYLE_WEIGHT = 1000.
+CONTENT_WEIGHT = 10.
+N_ITER = 500
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
 
@@ -36,10 +36,10 @@ class VGGActivations(nn.Module):
             x = layer(x)
             if type(layer) == torch.nn.modules.conv.Conv2d:
                 conv_results.append(x)
-            # FIX
             if len(conv_results) == 5:
                 break
         return conv_results
+
 
 def toTorch(im):
     im = sktrans.resize(im, IMAGE_SHAPE, mode='constant')
@@ -57,7 +57,7 @@ def load_images():
     return content, style
 
 def initialize_target_image():
-    im = np.random.normal(0, 1, size=IMAGE_SHAPE)
+    im = np.random.randn(0, 1, size=IMAGE_SHAPE)
     im[im > 1] = 1
     im[im < -1] = -1
     return im
@@ -69,7 +69,7 @@ def calculate_content_loss(content_layers, target_layers):
         if i == 3:
             content, target = content_layers[i], target_layers[i]
             differences.append(torch.mean((content - target)**2))
-    return sum(differences)
+    return differences[0]
 
 def calculate_style_loss(style_layers, target_layers):
     # compute the Gram matrix - the auto-correlation of each filter activation
@@ -83,15 +83,14 @@ def calculate_style_loss(style_layers, target_layers):
         target_layer = target_layer.view(N, M)
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
-        # Convolutions are of shape (1, filter_h, filter_w, n_filters)
-        # normalize the squared loss
-        difference = torch.sum((G_s - G_t) ** 2)
-        normalized_difference = STYLE_LAYER_WEIGHTS[l]*(difference/(4 * (M**2) * (N ** 2)))
+        difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
+        normalized_difference = STYLE_LAYER_WEIGHTS[l]*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
 
 def construct_image(content, style):
-    target_param = nn.Parameter(toTorch(initialize_target_image()).data)
+    target = Variable(torch.randn([1, 3, 512, 512]).type(TENSOR_TYPE))
+    target_param = nn.Parameter(target.data)
     # NOTE: Experiment with learning rate later
     optimizer = LBFGS([target_param])
     vgg_activations = VGGActivations()
@@ -102,7 +101,7 @@ def construct_image(content, style):
     style_layers = vgg.forward(style)
     for i in range(N_ITER):
         # zero gradient buffer to prevent buildup
-        target_layers = vgg.forward(target_param)
+        target_layers = vgg.forward(target)
         def closure():
             optimizer.zero_grad()
             style_loss = calculate_style_loss(style_layers, target_layers)
@@ -111,21 +110,22 @@ def construct_image(content, style):
                 print('Step:', i, '/', N_ITER)
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
-            if i % 100 == 0:
-                if USE_CUDA:
-                    cloned_param = target_param.clone().cpu()
-                else:
-                    cloned_param = target_param.clone()
-                print(cloned_param.data.size())
-                im = cloned_param.squeeze(0).data.numpy()
-                # reshape the image to be (N, N, 3) from (3, N, N)
-                im = np.moveaxis(im, 0, -1)
-                # print('range of values: ', np.min(im), np.max(im))
-                # print('Saved image with shape:', im.shape)
-                skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
             return loss
+            # if i % 100 == 0:
+            #     if USE_CUDA:
+            #         cloned_param = target_param.clone().cpu()
+            #     else:
+            #         cloned_param = target_param.clone()
+            #     print(cloned_param.data.size())
+            #     im = cloned_param.squeeze(0).data.numpy()
+            #     # reshape the image to be (N, N, 3) from (3, N, N)
+            #     im = np.moveaxis(im, 0, -1)
+            #     print('range of values: ', np.min(im), np.max(im))
+            #     # print('Saved image with shape:', im.shape)
+            #     skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
+
         optimizer.step(closure)
     return target_param.squeeze(0).data.numpy()
 
