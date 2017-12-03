@@ -1,5 +1,6 @@
 import sys
 import torch
+import torchvision.utils as utils
 import torchvision.models as models
 import torch.nn as nn
 from torch.optim import LBFGS
@@ -114,17 +115,19 @@ def construct_image(content, style):
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
             if i % 100 == 0:
+
                 if USE_CUDA:
                     cloned_param = target.clone().cpu()
                 else:
                     cloned_param = target.clone()
                 print(cloned_param.data.size())
-                im = cloned_param.squeeze(0).data.numpy()
+                im = cloned_param.squeeze(0).data
+                utils.save_image(im, OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
                 # reshape the image to be (N, N, 3) from (3, N, N)
-                im = np.moveaxis(im, 0, -1)
+                # im = np.moveaxis(im, 0, -1)
                 # print('range of values: ', np.min(im), np.max(im))
                 # print('Saved image with shape:', im.shape)
-                skio.imsave(OUT_PATH + 'output_' + str(i) + '.'+ F_EXT, im)
+                # torchvision.utils.save_image(im, OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
             return loss
 
 
