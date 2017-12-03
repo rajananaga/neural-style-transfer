@@ -115,9 +115,9 @@ def construct_image(content, style):
             loss.backward(retain_graph=True)
             if i % 100 == 0:
                 if USE_CUDA:
-                    cloned_param = target_param.clone().cpu()
+                    cloned_param = target.clone().cpu()
                 else:
-                    cloned_param = target_param.clone()
+                    cloned_param = target.clone()
                 print(cloned_param.data.size())
                 im = cloned_param.squeeze(0).data.numpy()
                 # reshape the image to be (N, N, 3) from (3, N, N)
