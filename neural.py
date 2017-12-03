@@ -130,7 +130,7 @@ def construct_image(content, style):
                     cloned_param = target.clone()
                 print(cloned_param.data.size())
                 im = cloned_param.squeeze(0).data
-                denorm = transforms.Normalize((-2.12, -2.04, -1.80), (4.37, 4.46, 4.44))
+                denorm = trans.Normalize((-2.12, -2.04, -1.80), (4.37, 4.46, 4.44))
                 utils.save_image(denorm(im).clamp(0,1), OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
             return loss
         optimizer.step(closure)
