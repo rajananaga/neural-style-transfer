@@ -18,12 +18,12 @@ OUT_PATH = 'output/'
 F_EXT = 'JPG'
 CONTENT_IMAGE = IM_PATH + 'content.jpg'
 STYLE_IMAGE = IM_PATH + 'style.jpg'
-IM_SIZE = 128
+IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
 STYLE_WEIGHT = 1000.
 CONTENT_WEIGHT = 10.
-N_ITER = 500
+N_ITER = 1000
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
 
@@ -100,7 +100,6 @@ def construct_image(content, style):
     vgg = vgg_activations
     content_layers = vgg.forward(content)
     style_layers = vgg.forward(style)
-    # pdb.set_trace()
     for i in range(N_ITER):
         # zero gradient buffer to prevent buildup
         target_layers = vgg.forward(target)
@@ -114,8 +113,7 @@ def construct_image(content, style):
                 print('Content loss:', content_loss.data[0])
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             loss.backward(retain_graph=True)
-            if i % 100 == 0:
-
+            if (i+1) % 100 == 0:
                 if USE_CUDA:
                     cloned_param = target.clone().cpu()
                 else:
@@ -123,16 +121,8 @@ def construct_image(content, style):
                 print(cloned_param.data.size())
                 im = cloned_param.squeeze(0).data
                 utils.save_image(im, OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
-                # reshape the image to be (N, N, 3) from (3, N, N)
-                # im = np.moveaxis(im, 0, -1)
-                # print('range of values: ', np.min(im), np.max(im))
-                # print('Saved image with shape:', im.shape)
-                # torchvision.utils.save_image(im, OUT_PATH + 'output_' + str(i) + '.'+ F_EXT)
             return loss
-
-
         optimizer.step(closure)
-    return target_param.squeeze(0).data.numpy()
 
 if __name__ == "__main__":
     # if len(sys.argv) > 1 and sys.argv[1] == '--gpu':
