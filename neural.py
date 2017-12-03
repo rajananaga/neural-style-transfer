@@ -76,9 +76,8 @@ def initialize_target_image():
 def calculate_content_loss(content_layers, target_layers):
     differences = []
     for i in range(len(content_layers)):
-        if i == 3:
-            content, target = content_layers[i], target_layers[i]
-            differences.append(torch.mean((content - target)**2))
+        content, target = content_layers[i], target_layers[i]
+        differences.append(torch.mean((content - target)**2))
     return differences[0]
 
 def calculate_style_loss(style_layers, target_layers):
