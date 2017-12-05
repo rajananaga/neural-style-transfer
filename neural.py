@@ -22,10 +22,12 @@ IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
 STYLE_WEIGHT = 1000.
-CONTENT_WEIGHT = 100.
+CONTENT_WEIGHT = 1.
 N_ITER = 301
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
+CLONE_STYLE = True
+CLONE_TARGET = False
 
 class VGGActivations(nn.Module):
     def __init__(self):
@@ -98,10 +100,14 @@ def calculate_style_loss(style_layers, target_layers):
     return sum(layer_expectations)
 
 def construct_image(content, style):
-    target = Variable(content.clone().data, requires_grad=True)
+    if CLONE_CONTENT:
+        target = Variable(content.clone().data, requires_grad=True)
+    elif CLONE_STYLE:
+        target = Variable(style.clone().data, requires_grad=True)
+    else:
+        target = Variable(torch.randn([1, 3, IM_SIZE, IM_SIZE]).type(TENSOR_TYPE), requires_grad=True)
     # NOTE: Experiment with learning rate later
     ## taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
-
     optimizer = LBFGS([target])
     vgg_activations = VGGActivations()
     if USE_CUDA:
@@ -121,7 +127,8 @@ def construct_image(content, style):
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
-            loss.backward(retain_graph=True)
+            content_loss.backward(retain_graph=True)
+            style_loss.backward(retain_graph=True)
             if (i+1) % 100 == 0:
                 if USE_CUDA:
                     cloned_param = target.clone().cpu()
