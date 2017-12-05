@@ -98,7 +98,7 @@ def calculate_style_loss(style_layers, target_layers):
     return sum(layer_expectations)
 
 def construct_image(content, style):
-    target = Variable(torch.randn([1, 3, IM_SIZE, IM_SIZE]).type(TENSOR_TYPE), requires_grad=True)
+    target = Variable(content.clone(), requires_grad=True)
     # NOTE: Experiment with learning rate later
     ## taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
 
@@ -143,5 +143,3 @@ if __name__ == "__main__":
         TENSOR_TYPE = torch.cuda.FloatTensor
     content, style = load_images()
     final_image = construct_image(content, style)
-    plt.imshow(final_image)
-    plt.show()
