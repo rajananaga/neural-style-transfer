@@ -78,8 +78,6 @@ def main(config):
     vgg = VGGNet()
     if use_cuda:
         vgg.cuda()
-    import pdb
-    pdb.set_trace()
     for step in range(config.total_step):
 
         # Extract multiple(5) conv feature vectors
