@@ -98,7 +98,7 @@ def calculate_style_loss(style_layers, target_layers):
     return sum(layer_expectations)
 
 def construct_image(content, style):
-    target = Variable(content.clone(), requires_grad=True)
+    target = Variable(content.clone().data, requires_grad=True)
     # NOTE: Experiment with learning rate later
     ## taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
 
