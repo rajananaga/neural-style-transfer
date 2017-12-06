@@ -79,7 +79,7 @@ def calculate_content_loss(content_layers, target_layers):
     differences = []
     for i in range(len(content_layers)):
         if i == 3:
-	    content, target = content_layers[i], target_layers[i]
+            content, target = content_layers[i], target_layers[i]
             differences.append(torch.mean((content - target)**2))
     return differences
 
