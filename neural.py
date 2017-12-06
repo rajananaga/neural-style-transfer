@@ -21,12 +21,12 @@ STYLE_IMAGE = IM_PATH + 'style.jpg'
 IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
-STYLE_WEIGHT = 1000.
-CONTENT_WEIGHT = 10000
-N_ITER = 2001
+STYLE_WEIGHT = 100000
+CONTENT_WEIGHT = 100
+N_ITER = 4001
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
-CLONE_STYLE = False
+CLONE_STYLE = True
 CLONE_CONTENT = False
 
 class VGGActivations(nn.Module):
@@ -78,9 +78,10 @@ def initialize_target_image():
 def calculate_content_loss(content_layers, target_layers):
     differences = []
     for i in range(len(content_layers)):
-        content, target = content_layers[i], target_layers[i]
-        differences.append(torch.mean((content - target)**2))
-    return differences[0]
+        if i == 3:
+	    content, target = content_layers[i], target_layers[i]
+            differences.append(torch.mean((content - target)**2))
+    return differences
 
 def calculate_style_loss(style_layers, target_layers):
     # compute the Gram matrix - the auto-correlation of each filter activation
