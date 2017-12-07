@@ -121,9 +121,10 @@ def construct_image(content, style):
     content_layers = vgg.forward(content)
     style_layers = vgg.forward(style)
     for i in range(N_ITER):
-        # zero gradient buffer to prevent buildup
-        target_layers = vgg.forward(target)
         def closure():
+            # zero gradient buffer to prevent buildup
+            target.data.clamp_(0, 1)
+            target_layers = vgg.forward(target)
             optimizer.zero_grad()
             style_loss = calculate_style_loss(style_layers, target_layers)
             content_loss = calculate_content_loss(content_layers, target_layers)
