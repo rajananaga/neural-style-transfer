@@ -13,7 +13,7 @@ import numpy as np
 from torch.autograd import Variable
 import pdb
 
-DATASET = 'starry'
+DATASET = 'monetgarden'
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
 F_EXT = 'jpg'
@@ -23,8 +23,8 @@ IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
 STYLE_WEIGHT = 1000
-CONTENT_WEIGHT = 1
-N_ITER = 500
+CONTENT_WEIGHT = 100
+N_ITER = 700
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
 CLONE_STYLE = False
