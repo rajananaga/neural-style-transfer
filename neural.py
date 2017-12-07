@@ -133,8 +133,9 @@ def construct_image(content, style):
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
-            content_loss.backward(retain_graph=True)
-            style_loss.backward(retain_graph=True)
+            # content_loss.backward(retain_graph=True)
+            # style_loss.backward(retain_graph=True)
+            loss.backward()
             if (i+1) % 100 == 0:
                 if USE_CUDA:
                     cloned_param = target.clone().cpu()
@@ -143,7 +144,7 @@ def construct_image(content, style):
                 print(cloned_param.data.size())
                 im = cloned_param.squeeze(0).data
                 denorm = trans.Normalize((-2.12, -2.04, -1.80), (4.37, 4.46, 4.44))
-                utils.save_image(denorm(im).clamp(0,1), OUT_PATH + DATASET + '-' + str(STYLE_WEIGHT) + '_' + str(CONTENT_WEIGHT) + 'output_' + str(i) + '.'+ F_EXT)
+                utils.save_image(denorm(im).clamp(0,1), OUT_PATH + "comb" + DATASET + '-' + str(STYLE_WEIGHT) + '_' + str(CONTENT_WEIGHT) + 'output_' + str(i) + '.'+ F_EXT)
             return loss
         optimizer.step(closure)
 
