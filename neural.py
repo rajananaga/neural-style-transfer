@@ -13,11 +13,12 @@ import numpy as np
 from torch.autograd import Variable
 import pdb
 
+DATASET = 'starry'
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
-F_EXT = 'JPG'
-CONTENT_IMAGE = IM_PATH + 'content.jpg'
-STYLE_IMAGE = IM_PATH + 'style.jpg'
+F_EXT = 'jpg'
+CONTENT_IMAGE = IM_PATH + 'content_' + DATASET + '.' + F_EXT
+STYLE_IMAGE = IM_PATH + 'style_' + DATASET + '.' + F_EXT
 IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
