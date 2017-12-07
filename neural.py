@@ -38,10 +38,10 @@ class VGGActivations(nn.Module):
         conv_results = []
         for i, layer in enumerate(self.vgg.features):
             x = layer(x)
-            if type(layer) == torch.nn.modules.conv.Conv2d:
+            # Style: Conv1_1(0), Conv2_1(5), Conv3_1(10), Conv4_1(19), Conv5_1(28)
+            # Content: Conv4_2(21)
+            if type(layer) == torch.nn.modules.conv.Conv2d and i in [0, 5, 10, 19, 21, 28]:
                 conv_results.append(x)
-            if len(conv_results) == 5:
-                break
         return conv_results
 
 
@@ -78,7 +78,7 @@ def initialize_target_image():
 def calculate_content_loss(content_layers, target_layers):
     differences = []
     for i in range(len(content_layers)):
-        if i == 3:
+        if i == 4:
             content, target = content_layers[i], target_layers[i]
             differences.append(torch.mean((content - target)**2))
     return sum(differences)
@@ -87,6 +87,9 @@ def calculate_style_loss(style_layers, target_layers):
     # compute the Gram matrix - the auto-correlation of each filter activation
     layer_expectations = []
     for l in range(len(style_layers)):
+        # skip conv4_2
+        if l == 4:
+            continue
         style_layer = style_layers[l]
         target_layer = target_layers[l]
         _, N, y, x = style_layer.data.size()
