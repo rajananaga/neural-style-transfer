@@ -99,7 +99,7 @@ def calculate_style_loss(style_layers, target_layers):
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
         difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
-        normalized_difference = STYLE_LAYER_WEIGHTS[l]*(difference)
+        normalized_difference = 0.2*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
 
