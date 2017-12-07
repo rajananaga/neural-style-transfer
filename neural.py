@@ -135,7 +135,7 @@ def construct_image(content, style):
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
             # content_loss.backward(retain_graph=True)
             # style_loss.backward(retain_graph=True)
-            loss.backward()
+            loss.backward(retain_graph=True)
             if (i+1) % 100 == 0:
                 if USE_CUDA:
                     cloned_param = target.clone().cpu()
