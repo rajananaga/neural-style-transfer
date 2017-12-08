@@ -33,8 +33,8 @@ CLONE_CONTENT = True
 layer_names = ['conv1_1', 'conv1_2', 'conv2_1', 'conv2_2', 'conv3_1', 'conv3_2', 'conv3_3', 'conv3_4', 'conv4_1', 'conv4_2', 'conv4_3', 'conv4_4', 'conv5_1', 'conv5_2', 'conv5_3', 'conv5_4']
 layers = {layer_names[i]:i for i in range(len(layer_names))}
 
-STYLE_LAYERS = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']
-CONTENT_LAYERS = ['conv4_1', 'conv4_2']
+STYLE_LAYERS = ['conv1_1', 'conv2_1']
+CONTENT_LAYERS = ['conv4_2']
 
 class VGGActivations(nn.Module):
     def __init__(self):
