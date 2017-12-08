@@ -25,7 +25,7 @@ USE_CUDA = False
 STYLE_WEIGHT = 1000
 CONTENT_WEIGHT = 1
 N_ITER = 300
-STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
+WEIGHT = 0.25
 TENSOR_TYPE = torch.FloatTensor
 CLONE_STYLE = False
 CLONE_CONTENT = True
@@ -96,7 +96,7 @@ def calculate_style_loss(style_layers, target_layers):
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
         difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
-        normalized_difference = 0.2*(difference)
+        normalized_difference = WEIGHT*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
 
