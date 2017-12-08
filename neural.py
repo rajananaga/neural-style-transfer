@@ -13,7 +13,7 @@ import numpy as np
 from torch.autograd import Variable
 import pdb
 
-DATASET = 'starry'
+DATASET = 'desert'
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
 F_EXT = 'jpg'
@@ -30,6 +30,12 @@ TENSOR_TYPE = torch.FloatTensor
 CLONE_STYLE = False
 CLONE_CONTENT = True
 
+layer_names = ['conv1_1', 'conv1_2', 'conv2_1', 'conv2_2', 'conv3_1', 'conv3_2', 'conv3_3', 'conv3_4', 'conv4_1', 'conv4_2', 'conv4_3', 'conv4_4', 'conv5_1', 'conv5_2', 'conv5_3', 'conv5_4']
+layers = {layer_names[i]:i for i in range(len(layer_names))}
+
+STYLE_LAYERS = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']
+CONTENT_LAYERS = ['conv4_1', 'conv4_2']
+
 class VGGActivations(nn.Module):
     def __init__(self):
         super(VGGActivations, self).__init__()
@@ -41,7 +47,7 @@ class VGGActivations(nn.Module):
             x = layer(x)
             # Style: Conv1_1(0), Conv2_1(5), Conv3_1(10), Conv4_1(19), Conv5_1(28)
             # Content: Conv4_2(21)
-            if type(layer) == torch.nn.modules.conv.Conv2d and i in [0, 5, 10, 19, 21, 28]:
+            if type(layer) == torch.nn.modules.conv.Conv2d:
                 conv_results.append(x)
         return conv_results
 
@@ -69,20 +75,18 @@ def initialize_target_image():
 
 # this is the average squared difference between the layer outputs
 def calculate_content_loss(content_layers, target_layers):
+    wanted_layers = [layers[l] for l in CONTENT_LAYERS]
     differences = []
-    for i in range(len(content_layers)):
-        if i == 4:
-            content, target = content_layers[i], target_layers[i]
-            differences.append(torch.mean((content - target)**2))
+    for i in wanted_layers:
+        content, target = content_layers[i], target_layers[i]
+        differences.append(torch.mean((content - target)**2))
     return sum(differences)
 
 def calculate_style_loss(style_layers, target_layers):
     # compute the Gram matrix - the auto-correlation of each filter activation
+    wanted_layers = [layers[l] for l in STYLE_LAYERS]
     layer_expectations = []
-    for l in range(len(style_layers)):
-        # skip conv4_2
-        if l == 4:
-            continue
+    for l in wanted_layers:
         style_layer = style_layers[l]
         target_layer = target_layers[l]
         _, N, y, x = style_layer.data.size()
