@@ -72,14 +72,12 @@ def main(config):
     style = load_image(config.style, transform, shape=[content.size(2), content.size(3)])
 
     # Initialization and optimizer
-    target = Variable(content.clone(), requires_grad=True)
+    target = Variable(torch.randn([1, 3, content.size(2), content.size(3)]).type(dtype), requires_grad=True)
     optimizer = torch.optim.Adam([target], lr=config.lr, betas=[0.5, 0.999])
 
     vgg = VGGNet()
     if use_cuda:
         vgg.cuda()
-    import pdb
-    pdb.set_trace()
     for step in range(config.total_step):
 
         # Extract multiple(5) conv feature vectors
