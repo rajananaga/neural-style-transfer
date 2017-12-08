@@ -13,7 +13,7 @@ import numpy as np
 from torch.autograd import Variable
 import pdb
 
-DATASET = 'cube'
+DATASET = 'mediterranean'
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
 F_EXT = 'jpg'
