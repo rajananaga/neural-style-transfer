@@ -144,7 +144,7 @@ if __name__ == "__main__":
     #     USE_CUDA = True
     USE_CUDA = torch.cuda.is_available()
     print('using gpu:', USE_CUDA)
-    print('using the following images: ')
+    print('using the following images:', 'style:', STYLE_IMAGE, 'content:', CONTENT_IMAGE)
     if USE_CUDA:
         TENSOR_TYPE = torch.cuda.FloatTensor
     content, style = load_images()
