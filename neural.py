@@ -28,7 +28,7 @@ N_ITER = 700
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
 CLONE_STYLE = False
-CLONE_CONTENT = False
+CLONE_CONTENT = True
 
 class VGGActivations(nn.Module):
     def __init__(self):
