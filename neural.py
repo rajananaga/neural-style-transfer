@@ -23,7 +23,7 @@ IM_SIZE = 512
 IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
 STYLE_WEIGHT = 1000
-CONTENT_WEIGHT = 100
+CONTENT_WEIGHT = 1
 N_ITER = 700
 STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
@@ -99,7 +99,7 @@ def calculate_style_loss(style_layers, target_layers):
         target_layer = target_layer.view(N, M)
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
-        difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
+        difference = torch.mean(((G_s - G_t) ** 2)/(4 * M**2 * N**2))
         normalized_difference = 0.2*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
@@ -133,9 +133,8 @@ def construct_image(content, style):
                 print('Style loss:', style_loss.data[0])
                 print('Content loss:', content_loss.data[0])
             loss = content_loss * CONTENT_WEIGHT + style_loss * STYLE_WEIGHT
-            # content_loss.backward(retain_graph=True)
-            # style_loss.backward(retain_graph=True)
-            loss.backward(retain_graph=True)
+            content_loss.backward(retain_graph=True)
+            style_loss.backward(retain_graph=True)
             if (i+1) % 100 == 0:
                 if USE_CUDA:
                     cloned_param = target.clone().cpu()
