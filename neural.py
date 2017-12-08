@@ -45,14 +45,6 @@ class VGGActivations(nn.Module):
                 conv_results.append(x)
         return conv_results
 
-
-# def toTorch(im):
-#     im = sktrans.resize(im, IMAGE_SHAPE, mode='constant')
-#     im = Variable(trans.ToTensor()(im))
-#     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
-#     im = im.unsqueeze(0)
-#     return im.type(TENSOR_TYPE)
-
 def toTorch(im):
     im = sktrans.resize(im, IMAGE_SHAPE, mode='constant')
     transform = trans.Compose([trans.ToTensor(),trans.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
@@ -99,7 +91,7 @@ def calculate_style_loss(style_layers, target_layers):
         target_layer = target_layer.view(N, M)
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
-        difference = torch.mean(((G_s - G_t) ** 2)/(4 * M**2 * N**2))
+        difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
         normalized_difference = 0.2*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
@@ -152,6 +144,7 @@ if __name__ == "__main__":
     #     USE_CUDA = True
     USE_CUDA = torch.cuda.is_available()
     print('using gpu:', USE_CUDA)
+    print('using the following images: ')
     if USE_CUDA:
         TENSOR_TYPE = torch.cuda.FloatTensor
     content, style = load_images()
