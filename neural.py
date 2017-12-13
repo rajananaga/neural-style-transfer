@@ -13,7 +13,7 @@ import numpy as np
 from torch.autograd import Variable
 import pdb
 
-DATASET = 'portrait'
+DATASET = 'expression'
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
 F_EXT = 'jpg'
@@ -24,7 +24,7 @@ IMAGE_SHAPE = (IM_SIZE, IM_SIZE, 3)
 USE_CUDA = False
 STYLE_WEIGHT = 1000
 CONTENT_WEIGHT = 1
-N_ITER = 300
+N_ITER = 100
 WEIGHT = 0.2
 TENSOR_TYPE = torch.FloatTensor
 CLONE_STYLE = False
