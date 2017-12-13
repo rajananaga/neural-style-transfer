@@ -68,7 +68,7 @@ def load_images():
     style = skio.imread(STYLE_IMAGE)/1.
     s = content.shape
     while s[0] > 1000 or s[1] > 1000:
-        s = [int(content.shape[0]/2), int(content.shape[1]/2), content.shape[2]]
+        s = [int(s[0]/2), int(s[1]/2), s[2]]
     print(content.shape)
     content = toTorch(content, s)
     style = toTorch(style, s)
