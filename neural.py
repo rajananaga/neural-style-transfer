@@ -54,7 +54,9 @@ class VGGActivations(nn.Module):
         return conv_results
 
 def toTorch(im, content_shape):
+    print('Before:', im.shape)
     im = sktrans.resize(im, content_shape, mode='constant')
+    print('After:', im.shape)
     transform = trans.Compose([trans.ToTensor(),trans.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     im = Variable(transform(im))
     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
@@ -64,7 +66,7 @@ def toTorch(im, content_shape):
 def load_images():
     content = skio.imread(CONTENT_IMAGE)/1.
     style = skio.imread(STYLE_IMAGE)/1.
-    s = [x/2 for x in content.shape / 2]
+    s = [int(content.shape[0]/2), int(content.shape[1]/2), content.shape[2]]
     print(content.shape)
     content = toTorch(content, s)
     style = toTorch(style, s)
@@ -105,6 +107,7 @@ def calculate_style_loss(style_layers, target_layers):
     return sum(layer_expectations)
 
 def construct_image(content, style):
+    print(content.clone().data.size())
     if CLONE_CONTENT:
         target = Variable(content.clone().data, requires_grad=True)
     elif CLONE_STYLE:
