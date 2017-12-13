@@ -62,8 +62,10 @@ def toTorch(im, content_shape):
 def load_images():
     content = skio.imread(CONTENT_IMAGE)/1.
     style = skio.imread(STYLE_IMAGE)/1.
-    content = toTorch(content, content.shape)
-    style = toTorch(style, content.shape)
+    s = content.shape / 2
+    print(content.shape)
+    content = toTorch(content, s)
+    style = toTorch(style, s)
     assert style.data.size() == content.data.size(), "Image shapes are not equal"
     return content, style
 
