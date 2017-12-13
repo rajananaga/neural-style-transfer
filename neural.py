@@ -25,7 +25,7 @@ USE_CUDA = False
 STYLE_WEIGHT = 1000
 CONTENT_WEIGHT = 1
 N_ITER = 300
-WEIGHT = 0.2
+STYLE_LAYER_WEIGHTS = [0.2 for _ in range(5)]
 TENSOR_TYPE = torch.FloatTensor
 CLONE_STYLE = False
 CLONE_CONTENT = True
@@ -51,8 +51,8 @@ class VGGActivations(nn.Module):
                 conv_results.append(x)
         return conv_results
 
-def toTorch(im):
-    im = sktrans.resize(im, IMAGE_SHAPE, mode='constant')
+def toTorch(im, content_shape):
+    im = sktrans.resize(im, content_shape, mode='constant')
     transform = trans.Compose([trans.ToTensor(),trans.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     im = Variable(transform(im))
     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
@@ -62,13 +62,13 @@ def toTorch(im):
 def load_images():
     content = skio.imread(CONTENT_IMAGE)/1.
     style = skio.imread(STYLE_IMAGE)/1.
-    content = toTorch(content)
-    style = toTorch(style)
+    content = toTorch(content, content.shape)
+    style = toTorch(style, content.shape)
     assert style.data.size() == content.data.size(), "Image shapes are not equal"
     return content, style
 
-def initialize_target_image():
-    im = np.random.uniform(0, 1, size=IMAGE_SHAPE)
+def initialize_target_image(shape):
+    im = np.random.uniform(0, 1, size=shape)
     im[im > 1] = 1
     im[im < -1] = -1
     return im
@@ -96,7 +96,7 @@ def calculate_style_loss(style_layers, target_layers):
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
         difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
-        normalized_difference = WEIGHT*(difference)
+        normalized_difference = 0.2*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
 
@@ -106,7 +106,7 @@ def construct_image(content, style):
     elif CLONE_STYLE:
         target = Variable(style.clone().data, requires_grad=True)
     else:
-        target = Variable(torch.randn([1, 3, IM_SIZE, IM_SIZE]).type(TENSOR_TYPE), requires_grad=True)
+        target = Variable(torch.randn([1, 3, content.data.size()[0], content.data.size()[1]]).type(TENSOR_TYPE), requires_grad=True)
     # NOTE: Experiment with learning rate later
     ## taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
     optimizer = LBFGS([target])
