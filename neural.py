@@ -62,7 +62,7 @@ def toTorch(im, content_shape):
 def load_images():
     content = skio.imread(CONTENT_IMAGE)/1.
     style = skio.imread(STYLE_IMAGE)/1.
-    s = content.shape / 2
+    s = [x/2 for x in content.shape / 2]
     print(content.shape)
     content = toTorch(content, s)
     style = toTorch(style, s)
