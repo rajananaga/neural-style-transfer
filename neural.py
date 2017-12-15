@@ -3,17 +3,15 @@ import torch
 import torchvision.utils as utils
 import torchvision.models as models
 import torch.nn as nn
-from torch.optim import LBFGS
 import torchvision.transforms as trans
+from torch.optim import LBFGS
+from torch.autograd import Variable
 import skimage.io as skio
 import skimage.util as skutil
 import skimage.transform as sktrans
-import matplotlib.pyplot as plt
 import numpy as np
-from torch.autograd import Variable
-import pdb
 
-DATASET = 'afremov'
+DATASET = 'monet2'
 IM_PATH = 'input/'
 OUT_PATH = 'output/'
 F_EXT = 'jpg'
@@ -52,9 +50,8 @@ class VGGActivations(nn.Module):
         return conv_results
 
 def toTorch(im, content_shape):
-    print('Before:', im.shape)
     im = sktrans.resize(im, content_shape, mode='constant')
-    print('After:', im.shape)
+    # taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
     transform = trans.Compose([trans.ToTensor(),trans.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     im = Variable(transform(im))
     # VGG network throws error if the shape doesn't have a 1 in front (1 x 512 x 512)
@@ -67,7 +64,6 @@ def load_images():
     s = content.shape
     while s[0] > 1000 or s[1] > 1000:
         s = [int(s[0]/2), int(s[1]/2), s[2]]
-    print(content.shape)
     content = toTorch(content, s)
     style = toTorch(style, s)
     assert style.data.size() == content.data.size(), "Image shapes are not equal"
@@ -79,7 +75,7 @@ def initialize_target_image(shape):
     im[im < -1] = -1
     return im
 
-# this is the average squared difference between the layer outputs
+# This is the average squared difference between the layer outputs
 def calculate_content_loss(content_layers, target_layers):
     wanted_layers = [layers[l] for l in CONTENT_LAYERS]
     differences = []
@@ -89,7 +85,6 @@ def calculate_content_loss(content_layers, target_layers):
     return sum(differences)
 
 def calculate_style_loss(style_layers, target_layers):
-    # compute the Gram matrix - the auto-correlation of each filter activation
     wanted_layers = [layers[l] for l in STYLE_LAYERS]
     layer_expectations = []
     for l in wanted_layers:
@@ -99,23 +94,22 @@ def calculate_style_loss(style_layers, target_layers):
         M = y * x
         style_layer = style_layer.view(N, M)
         target_layer = target_layer.view(N, M)
+        # compute the Gram matrices - the auto-correlation of each filter activation
         G_s = torch.mm(style_layer, style_layer.t())
         G_t = torch.mm(target_layer, target_layer.t())
+        # MSE of differences between the Gram matrices
         difference = torch.mean(((G_s - G_t) ** 2)/(M*N*2))
         normalized_difference = 0.2*(difference)
         layer_expectations.append(normalized_difference)
     return sum(layer_expectations)
 
 def construct_image(content, style):
-    print(content.clone().data.size())
     if CLONE_CONTENT:
         target = Variable(content.clone().data, requires_grad=True)
     elif CLONE_STYLE:
         target = Variable(style.clone().data, requires_grad=True)
     else:
         target = Variable(torch.randn([1, 3, content.data.size()[0], content.data.size()[1]]).type(TENSOR_TYPE), requires_grad=True)
-    # NOTE: Experiment with learning rate later
-    ## taken from pytorch docs: https://github.com/pytorch/examples/blob/master/imagenet/main.py
     optimizer = LBFGS([target])
     vgg_activations = VGGActivations()
     if USE_CUDA:
@@ -143,7 +137,6 @@ def construct_image(content, style):
                     cloned_param = target.clone().cpu()
                 else:
                     cloned_param = target.clone()
-                print(cloned_param.data.size())
                 im = cloned_param.squeeze(0).data
                 denorm = trans.Normalize((-2.12, -2.04, -1.80), (4.37, 4.46, 4.44))
                 utils.save_image(denorm(im).clamp(0,1), OUT_PATH + DATASET + '-' + str(STYLE_WEIGHT) + '_' + str(CONTENT_WEIGHT) + 'output_' + str(i) + '.'+ F_EXT)
@@ -151,8 +144,6 @@ def construct_image(content, style):
         optimizer.step(closure)
 
 if __name__ == "__main__":
-    # if len(sys.argv) > 1 and sys.argv[1] == '--gpu':
-    #     USE_CUDA = True
     USE_CUDA = torch.cuda.is_available()
     print('using gpu:', USE_CUDA)
     print('using the following images:', 'style:', STYLE_IMAGE, 'content:', CONTENT_IMAGE)
