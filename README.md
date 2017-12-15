@@ -11,3 +11,8 @@ In the input folder, create images of the format `content_dataset-name.jpg` and 
 `python3 neural.py`
 
 ### Results
+![Expressionist Flower Market](collages/afremov_collage.jpg "Expressionist Flower Market")
+![Mountain in the style of Kandinsky](collages/mountain_collage.jpg "Mountain in the style of Kandinsky")
+![Cubist Tiger](collages/cubist_collage.jpg "Cubist Tiger")
+![Season Transfer](collages/season_collage.jpg "Season Transfer")
+![Portraits](collages/portrait_collage.jpg "Portrait")
